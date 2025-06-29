@@ -101,7 +101,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Item findItemOrThrow(long itemId) {
-        return itemRepository.findById(itemId).orElseThrow( () -> {
+        return itemRepository.findById(itemId).orElseThrow(() -> {
             log.warn("Нет вещи с id={}", itemId);
             return new NotFoundException("Нет вещи с id=" + itemId);
         });

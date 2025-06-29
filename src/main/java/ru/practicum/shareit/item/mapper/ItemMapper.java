@@ -11,7 +11,7 @@ public class ItemMapper {
                 item.getDescription(),
                 item.getAvailable(),
                 item.getRequest() != null ? item.getRequest() : null
-                );
+        );
     }
 
     public static Item toItem(ItemDto itemDto) {
@@ -22,6 +22,6 @@ public class ItemMapper {
                 itemDto.getAvailable(),
                 null,
                 itemDto.getRequest()
-                );
+        );
     }
 }

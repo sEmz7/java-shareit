@@ -26,7 +26,7 @@ class UserServiceImpl implements UserService {
     public UserDto saveUser(UserDto userDto) {
         checkExistingEmail(userDto.getEmail());
         userDto.setId(getNextId());
-        User savedUser =  userRepository.save(UserMapper.toUser(userDto));
+        User savedUser = userRepository.save(UserMapper.toUser(userDto));
         return UserMapper.toUserDto(savedUser);
     }
 
