@@ -6,6 +6,7 @@ import ru.practicum.shareit.item.model.Item;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository
 public class ItemRepositoryImpl implements ItemRepository {
@@ -17,8 +18,19 @@ public class ItemRepositoryImpl implements ItemRepository {
     }
 
     @Override
-    public Item save(Item item, long userId) {
+    public Item save(Item item) {
         items.put(item.getId(), item);
         return item;
+    }
+
+    @Override
+    public Item update(Item item) {
+        items.put(item.getId(), item);
+        return item;
+    }
+
+    @Override
+    public Optional<Item> findById(long itemId) {
+        return Optional.ofNullable(items.get(itemId));
     }
 }
