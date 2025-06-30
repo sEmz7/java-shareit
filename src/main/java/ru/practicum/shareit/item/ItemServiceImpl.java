@@ -20,6 +20,7 @@ import java.util.List;
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private long itemIdCounter;
 
     @Override
     public ItemDto create(ItemDto itemDto, long userId) {
@@ -71,26 +72,17 @@ public class ItemServiceImpl implements ItemService {
             return new ArrayList<>();
         }
         List<Item> items = itemRepository.findAll();
-        List<ItemDto> modItems = items
+        return items
                 .stream()
                 .filter(Item::getAvailable)
                 .filter(item -> item.getName().toLowerCase().contains(text.toLowerCase()) ||
                         item.getDescription().toLowerCase().contains(text.toLowerCase()))
                 .map(ItemMapper::toItemDto)
                 .toList();
-        return modItems;
     }
 
     private long getNextId() {
-        List<Item> items = itemRepository.findAll();
-        if (items.isEmpty()) {
-            return 1L;
-        }
-        return items
-                .stream()
-                .map(Item::getId)
-                .max(Long::compareTo)
-                .get() + 1L;
+        return ++itemIdCounter;
     }
 
     private User findUserOrThrow(long userId) {

@@ -14,17 +14,18 @@ import java.util.List;
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService itemService;
+    private static final String USER_ID_HEADER = "X-Sharer-User-Id";
 
     @PostMapping
     public ResponseEntity<ItemDto> createItem(@Valid @RequestBody ItemDto itemDto,
-                                              @RequestHeader("X-Sharer-User-Id") Long userId) {
+                                              @RequestHeader(USER_ID_HEADER) Long userId) {
         ItemDto createdItem = itemService.create(itemDto, userId);
         return ResponseEntity.ok(createdItem);
     }
 
     @PatchMapping("/{itemId}")
     public ResponseEntity<ItemDto> updateItem(@RequestBody ItemDto itemDto,
-                                              @RequestHeader("X-Sharer-User-Id") Long userId,
+                                              @RequestHeader(USER_ID_HEADER) Long userId,
                                               @PathVariable Long itemId) {
         ItemDto updatedItem = itemService.update(itemDto, userId, itemId);
         return ResponseEntity.ok(updatedItem);
@@ -37,13 +38,13 @@ public class ItemController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemDto>> getAllUserItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ResponseEntity<List<ItemDto>> getAllUserItems(@RequestHeader(USER_ID_HEADER) Long userId) {
         List<ItemDto> items = itemService.getAllUserItems(userId);
         return ResponseEntity.ok(items);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ItemDto>> getItemsByName(@RequestParam(value = "text") String text) {
+    public ResponseEntity<List<ItemDto>> getItemsByName(@RequestParam String text) {
         List<ItemDto> items = itemService.getAllItemsByName(text);
         return ResponseEntity.ok(items);
     }

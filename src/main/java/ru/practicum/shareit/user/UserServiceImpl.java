@@ -16,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private long userIdCounter;
 
     @Override
     public List<UserDto> getAllUsers() {
@@ -62,15 +63,7 @@ class UserServiceImpl implements UserService {
     }
 
     private long getNextId() {
-        List<UserDto> users = userRepository.findAll();
-        if (users.isEmpty()) {
-            return 1L;
-        }
-        return users
-                .stream()
-                .map(UserDto::getId)
-                .max(Long::compareTo)
-                .get() + 1L;
+        return ++userIdCounter;
     }
 
     private void checkExistingEmail(String email) {
