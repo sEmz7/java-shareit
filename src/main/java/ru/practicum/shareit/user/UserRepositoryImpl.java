@@ -32,10 +32,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return users.values()
-                .stream()
-                .filter(user -> user.getEmail().equals(email))
-                .findFirst();
+        return Optional.ofNullable(users.get(existingEmails.get(email)));
     }
 
     @Override
