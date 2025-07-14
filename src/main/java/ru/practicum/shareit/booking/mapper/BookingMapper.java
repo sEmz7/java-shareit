@@ -6,6 +6,8 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.item.dto.ItemDtoShort;
 import ru.practicum.shareit.user.dto.UserDtoShort;
 
+import java.util.List;
+
 public final class BookingMapper {
 
     private BookingMapper() {
@@ -33,12 +35,16 @@ public final class BookingMapper {
         );
     }
 
-    public static BookingDtoResponse matToDtoResponse(Booking booking) {
+    public static BookingDtoResponse mapToDtoResponse(Booking booking) {
         return new BookingDtoResponse(booking.getId(),
                 booking.getStart(),
                 booking.getEnd(),
                 new ItemDtoShort(booking.getItem().getId(), booking.getItem().getName()),
                 new UserDtoShort(booking.getBooker().getId(), booking.getBooker().getName()),
                 booking.getStatus());
+    }
+
+    public static List<BookingDtoResponse> mapListToDtoResponses(List<Booking> bookings) {
+        return bookings.stream().map(BookingMapper::mapToDtoResponse).toList();
     }
 }
