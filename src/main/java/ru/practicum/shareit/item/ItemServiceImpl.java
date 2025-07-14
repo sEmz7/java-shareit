@@ -20,13 +20,11 @@ import java.util.List;
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
-    private long itemIdCounter;
 
     @Override
     public ItemDto create(ItemDto itemDto, long userId) {
         User user = findUserOrThrow(userId);
         Item item = ItemMapper.toItem(itemDto);
-        item.setId(getNextId());
         item.setOwner(user);
         return ItemMapper.toItemDto(itemRepository.save(item));
     }
@@ -48,7 +46,7 @@ public class ItemServiceImpl implements ItemService {
         if (itemDto.getAvailable() != null) {
             item.setAvailable(itemDto.getAvailable());
         }
-        return ItemMapper.toItemDto(itemRepository.update(item));
+        return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
     @Override
@@ -59,11 +57,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> getAllUserItems(long userId) {
         findUserOrThrow(userId);
-        return itemRepository.findAll()
-                .stream()
-                .filter(item -> item.getOwner().getId() == userId)
-                .map(ItemMapper::toItemDto)
-                .toList();
+        return ItemMapper.mapListToDto(itemRepository.findAllByOwnerId(userId));
     }
 
     @Override
@@ -71,18 +65,7 @@ public class ItemServiceImpl implements ItemService {
         if (text.isBlank()) {
             return new ArrayList<>();
         }
-        List<Item> items = itemRepository.findAll();
-        return items
-                .stream()
-                .filter(Item::getAvailable)
-                .filter(item -> item.getName().toLowerCase().contains(text.toLowerCase()) ||
-                        item.getDescription().toLowerCase().contains(text.toLowerCase()))
-                .map(ItemMapper::toItemDto)
-                .toList();
-    }
-
-    private long getNextId() {
-        return ++itemIdCounter;
+        return ItemMapper.mapListToDto(itemRepository.searchAvailableItemsByNameOrDescription(text));
     }
 
     private User findUserOrThrow(long userId) {

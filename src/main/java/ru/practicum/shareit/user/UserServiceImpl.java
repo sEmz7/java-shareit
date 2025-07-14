@@ -3,6 +3,7 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.InvalidUserInputException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -14,19 +15,19 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private long userIdCounter;
 
+    @Transactional(readOnly = true)
     @Override
     public List<UserDto> getAllUsers() {
-        return userRepository.findAll();
+        return UserMapper.matListToUserDto(userRepository.findAll());
     }
 
     @Override
     public UserDto saveUser(UserDto userDto) {
         checkExistingEmail(userDto.getEmail());
-        userDto.setId(getNextId());
         User savedUser = userRepository.save(UserMapper.toUser(userDto));
         return UserMapper.toUserDto(savedUser);
     }
@@ -43,7 +44,7 @@ class UserServiceImpl implements UserService {
         if (userDto.getName() != null) {
             existingUser.setName(userDto.getName());
         }
-        User updatedUser = userRepository.update(userId, existingUser);
+        User updatedUser = userRepository.save(existingUser);
         return UserMapper.toUserDto(updatedUser);
     }
 
@@ -52,18 +53,15 @@ class UserServiceImpl implements UserService {
         if (userRepository.findById(userId).isEmpty()) {
             throw new NotFoundException("Нет пользователя с id=" + userId);
         }
-        userRepository.delete(userId);
+        userRepository.deleteById(userId);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public UserDto getUserById(long userId) {
         return UserMapper.toUserDto(userRepository.findById(userId).orElseThrow(
                 () -> new NotFoundException("Нет пользователя с id=" + userId)
         ));
-    }
-
-    private long getNextId() {
-        return ++userIdCounter;
     }
 
     private void checkExistingEmail(String email) {
