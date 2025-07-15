@@ -3,16 +3,20 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.BookingRepository;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exception.InvalidUserInputException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ import java.util.List;
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
     public ItemDto create(ItemDto itemDto, long userId) {
@@ -55,9 +60,31 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getAllUserItems(long userId) {
+    public List<ItemDtoWithBookingsDates> getAllUserItems(long userId) {
         findUserOrThrow(userId);
-        return ItemMapper.mapListToDto(itemRepository.findAllByOwnerId(userId));
+        LocalDateTime now = LocalDateTime.now();
+        List<Item> userItems = itemRepository.findAllByOwnerId(userId);
+        List<Booking> bookings = bookingRepository.findAllByItemOwnerId(userId);
+        Map<Item, List<Booking>> bookingsByItem = bookings.stream()
+                .collect(Collectors.groupingBy(Booking::getItem));
+        List<ItemDtoWithBookingsDates> result = new ArrayList<>();
+        for (Item item: userItems) {
+            List<Booking> itemBookings = bookingsByItem.getOrDefault(item, List.of());
+            Optional<Booking> lastBooking = itemBookings
+                    .stream()
+                    .filter(booking -> booking.getEnd().isBefore(now))
+                    .max(Comparator.comparing(Booking::getEnd));
+            Optional<Booking> nextBooking = itemBookings
+                    .stream()
+                    .filter(booking -> booking.getStart().isAfter(now))
+                    .min(Comparator.comparing(Booking::getStart));
+            result.add(ItemMapper.toItemDtoWithBookingsDates(
+                    item,
+                    lastBooking.orElse(null),
+                    nextBooking.orElse(null)
+            ));
+        }
+        return result;
     }
 
     @Override

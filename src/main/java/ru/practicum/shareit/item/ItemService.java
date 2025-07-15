@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item;
 
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
 
 import java.util.List;
 
@@ -11,7 +12,7 @@ interface ItemService {
 
     ItemDto getById(long itemId);
 
-    List<ItemDto> getAllUserItems(long userId);
+    List<ItemDtoWithBookingsDates> getAllUserItems(long userId);
 
     List<ItemDto> getAllItemsByName(String text);
 }

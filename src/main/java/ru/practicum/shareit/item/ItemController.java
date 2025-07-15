@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
 
 import java.util.List;
 
@@ -38,8 +39,8 @@ public class ItemController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemDto>> getAllUserItems(@RequestHeader(USER_ID_HEADER) Long userId) {
-        List<ItemDto> items = itemService.getAllUserItems(userId);
+    public ResponseEntity<List<ItemDtoWithBookingsDates>> getAllUserItems(@RequestHeader(USER_ID_HEADER) Long userId) {
+        List<ItemDtoWithBookingsDates> items = itemService.getAllUserItems(userId);
         return ResponseEntity.ok(items);
     }
 
