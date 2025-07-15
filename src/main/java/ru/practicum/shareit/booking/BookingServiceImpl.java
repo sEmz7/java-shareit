@@ -10,15 +10,13 @@ import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exception.InvalidUserInputException;
-import ru.practicum.shareit.exception.NotAvailable;
+import ru.practicum.shareit.exception.NotAvailableException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,7 +37,7 @@ public class BookingServiceImpl implements BookingService {
             return new NotFoundException("Нет предмета с id=" + bookingDto.getItemId());
         });
         if (!item.getAvailable()) {
-            throw new NotAvailable("Вещь недоступна для бронирования.");
+            throw new NotAvailableException("Вещь недоступна для бронирования.");
         }
         Booking booking = BookingMapper.mapFromDto(bookingDto);
         booking.setBooker(booker);
@@ -53,7 +51,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingDtoResponse updateBookingStatus(long bookingId, boolean approved, long userId) {
         Booking booking = getBookingByIdOrThrow(bookingId);
         if (booking.getItem().getOwner().getId() != userId) {
-            throw new NotAvailable("Изменить статус бронирования может только владелец вещи.");
+            throw new NotAvailableException("Изменить статус бронирования может только владелец вещи.");
         }
         getUserByIdOrThrow(userId);
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
@@ -101,19 +99,40 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDtoResponse> getOwnerBookings(String state, long ownerId) {
-        if (state.equals("ALL")) {
-            return BookingMapper.mapListToDtoResponses(bookingRepository.findAllByItemOwnerIdOrderByStartDesc(ownerId));
-        }
-        BookingStatus status;
+    public List<BookingDtoResponse> getOwnerBookings(String stateStr, long ownerId) {
+        State state;
         try {
-            status = BookingStatus.valueOf(state.toUpperCase());
+            state = State.valueOf(stateStr);
         } catch (IllegalArgumentException e) {
-            throw new InvalidUserInputException("Нет такого статуса брони: " + state);
+            throw new InvalidUserInputException("Нет такого статуса брони: " + stateStr);
         }
-        return BookingMapper.mapListToDtoResponses(
-                bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(ownerId, status)
-        );
+        List<BookingDtoResponse> list = switch (state) {
+            case ALL -> BookingMapper.mapListToDtoResponses(
+                    bookingRepository.findAllByItemOwnerIdOrderByStartDesc(ownerId));
+            case CURRENT -> BookingMapper.mapListToDtoResponses(
+                    bookingRepository.findAllByItemOwnerIdAndStateCurrent(
+                            ownerId, state, Sort.by(Sort.Direction.DESC, "start")
+                    )
+            );
+            case PAST -> BookingMapper.mapListToDtoResponses(
+                    bookingRepository.findAllByItemOwnerIdAndStatePast(
+                            ownerId, state, Sort.by(Sort.Direction.DESC, "start")
+                    )
+            );
+            case FUTURE -> BookingMapper.mapListToDtoResponses(
+                    bookingRepository.findAllByItemOwnerIdAndStateFuture(
+                            ownerId, state, Sort.by(Sort.Direction.DESC, "start")
+                    )
+            );
+            case WAITING -> BookingMapper.mapListToDtoResponses(
+                    bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(ownerId, BookingStatus.WAITING));
+            case REJECTED -> BookingMapper.mapListToDtoResponses(
+                    bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(ownerId, BookingStatus.REJECTED));
+        };
+        if (list.isEmpty()) {
+            throw new NotFoundException("Нету ни одной вещи для бронирования.");
+        }
+        return list;
     }
 
     private User getUserByIdOrThrow(long userId) {

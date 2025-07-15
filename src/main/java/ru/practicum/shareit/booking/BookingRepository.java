@@ -31,4 +31,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "WHERE b.booker.id = ?1 " +
             "AND current_timestamp < b.start")
     List<Booking> findAllByBookerIdAndStateFuture(long bookerId, State state, Sort sort);
+
+    @Query("SELECT b FROM Booking b " +
+            "WHERE b.item.owner.id = ?1 " +
+            "AND current_timestamp BETWEEN b.start AND b.end")
+    List<Booking> findAllByItemOwnerIdAndStateCurrent(long ownerId, State state, Sort sort);
+
+    @Query("SELECT b FROM Booking b " +
+            "WHERE b.item.owner.id = ?1 " +
+            "AND current_timestamp > b.end")
+    List<Booking> findAllByItemOwnerIdAndStatePast(long ownerId, State state, Sort sort);
+
+    @Query("SELECT b FROM Booking b " +
+            "WHERE b.item.owner.id = ?1 " +
+            "AND current_timestamp < b.start")
+    List<Booking> findAllByItemOwnerIdAndStateFuture(long ownerId, State state, Sort sort);
 }
