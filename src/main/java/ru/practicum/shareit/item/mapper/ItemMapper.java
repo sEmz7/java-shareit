@@ -4,10 +4,11 @@ import ru.practicum.shareit.booking.dto.BookingItemDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
+import ru.practicum.shareit.item.model.Comment;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
-import java.util.Optional;
 
 public final class ItemMapper {
 
@@ -76,5 +77,19 @@ public final class ItemMapper {
                 lastBookingDto,
                 nextBookingDto
         );
+    }
+
+    public static Comment mapCommentFromDto(CommentDto commentDto) {
+        return new Comment(
+                commentDto.getId(),
+                commentDto.getText(),
+                null,
+                null,
+                null
+        );
+    }
+
+    public static CommentDto mapCommentToDto(Comment comment) {
+        return new CommentDto(comment.getId(), comment.getText(), comment.getAuthor().getName(), comment.getCreated());
     }
 }

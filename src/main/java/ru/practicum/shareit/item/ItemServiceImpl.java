@@ -6,10 +6,13 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exception.InvalidUserInputException;
+import ru.practicum.shareit.exception.NotAvailableException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Comment;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.model.User;
@@ -25,6 +28,7 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     public ItemDto create(ItemDto itemDto, long userId) {
@@ -93,6 +97,27 @@ public class ItemServiceImpl implements ItemService {
             return new ArrayList<>();
         }
         return ItemMapper.mapListToDto(itemRepository.searchAvailableItemsByNameOrDescription(text));
+    }
+
+    @Override
+    public CommentDto addCommentToItem(CommentDto commentDto, long itemId, long userId) {
+        User user = findUserOrThrow(userId);
+        Item item = findItemOrThrow(itemId);
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> itemBookings = bookingRepository.findAllByItemId(itemId);
+        boolean isUserBookedItem = itemBookings
+                .stream()
+                .anyMatch(booking -> booking.getBooker().getId() == userId && booking.getEnd().isBefore(now));
+        if (!isUserBookedItem) {
+            log.warn("Пользователь с id={} не бронировал вещь с id={} или бронирование еще не завершено" +
+                    " — отзыв невозможен.", userId, itemId);
+            throw new NotAvailableException("Отзыв возможен только после бронирования.");
+        }
+        Comment comment = ItemMapper.mapCommentFromDto(commentDto);
+        comment.setItem(item);
+        comment.setAuthor(user);
+        comment.setCreated(now);
+        return ItemMapper.mapCommentToDto(commentRepository.save(comment));
     }
 
     private User findUserOrThrow(long userId) {

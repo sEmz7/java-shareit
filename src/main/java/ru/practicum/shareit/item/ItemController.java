@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
+import ru.practicum.shareit.item.dto.CommentDto;
 
 import java.util.List;
 
@@ -48,5 +49,13 @@ public class ItemController {
     public ResponseEntity<List<ItemDto>> getItemsByName(@RequestParam String text) {
         List<ItemDto> items = itemService.getAllItemsByName(text);
         return ResponseEntity.ok(items);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public ResponseEntity<CommentDto> addCommentToItem(@Valid @RequestBody CommentDto commentDto,
+                                                       @PathVariable long itemId,
+                                                       @RequestHeader(USER_ID_HEADER) Long userId) {
+        CommentDto addedComment = itemService.addCommentToItem(commentDto, itemId, userId);
+        return ResponseEntity.ok().body(addedComment);
     }
 }
