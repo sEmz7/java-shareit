@@ -4,9 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import ru.practicum.shareit.booking.dto.BookingItemDto;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
-public class ItemDtoWithBookingsDates {
+public class ItemDtoWithDatesAndComments {
     private Long id;
     private String name;
     private String description;
@@ -14,4 +16,5 @@ public class ItemDtoWithBookingsDates {
     private Long requestId;
     private BookingItemDto lastBooking;
     private BookingItemDto nextBooking;
+    private List<CommentDto> comments;
 }

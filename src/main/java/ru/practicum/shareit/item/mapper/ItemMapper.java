@@ -3,7 +3,7 @@ package ru.practicum.shareit.item.mapper;
 import ru.practicum.shareit.booking.dto.BookingItemDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
+import ru.practicum.shareit.item.dto.ItemDtoWithDatesAndComments;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.model.Item;
@@ -41,10 +41,11 @@ public final class ItemMapper {
         return items.stream().map(ItemMapper::toItemDto).toList();
     }
 
-    public static ItemDtoWithBookingsDates toItemDtoWithBookingsDates(
+    public static ItemDtoWithDatesAndComments toItemDtoWithBookingsDatesAndComments(
             Item item,
             Booking lastBooking,
-            Booking nextBooking
+            Booking nextBooking,
+            List<CommentDto> commentDtos
     ) {
         BookingItemDto lastBookingDto = null;
         if (lastBooking != null) {
@@ -68,14 +69,15 @@ public final class ItemMapper {
             );
         }
 
-        return new ItemDtoWithBookingsDates(
+        return new ItemDtoWithDatesAndComments(
                 item.getId(),
                 item.getName(),
                 item.getDescription(),
                 item.getAvailable(),
                 item.getRequest() != null ? item.getRequest().getId() : null,
                 lastBookingDto,
-                nextBookingDto
+                nextBookingDto,
+                commentDtos
         );
     }
 
@@ -91,5 +93,9 @@ public final class ItemMapper {
 
     public static CommentDto mapCommentToDto(Comment comment) {
         return new CommentDto(comment.getId(), comment.getText(), comment.getAuthor().getName(), comment.getCreated());
+    }
+
+    public static List<CommentDto> mapListToCommentDto(List<Comment> comments) {
+        return comments.stream().map(ItemMapper::mapCommentToDto).toList();
     }
 }

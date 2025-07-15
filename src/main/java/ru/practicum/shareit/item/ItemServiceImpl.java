@@ -3,13 +3,14 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exception.InvalidUserInputException;
 import ru.practicum.shareit.exception.NotAvailableException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
+import ru.practicum.shareit.item.dto.ItemDtoWithDatesAndComments;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.dto.CommentDto;
@@ -24,12 +25,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
 
+    @Transactional
     @Override
     public ItemDto create(ItemDto itemDto, long userId) {
         User user = findUserOrThrow(userId);
@@ -38,6 +41,7 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
+    @Transactional
     @Override
     public ItemDto update(ItemDto itemDto, long userId, long itemId) {
         findUserOrThrow(userId);
@@ -59,19 +63,22 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto getById(long itemId) {
-        return ItemMapper.toItemDto(findItemOrThrow(itemId));
+    public ItemDtoWithDatesAndComments getById(long itemId) {
+        Item item = findItemOrThrow(itemId);
+        List<CommentDto> commentDtos = ItemMapper.mapListToCommentDto(commentRepository.findAllByItemId(itemId));
+        return ItemMapper.toItemDtoWithBookingsDatesAndComments(
+                item, null, null, commentDtos);
     }
 
     @Override
-    public List<ItemDtoWithBookingsDates> getAllUserItems(long userId) {
+    public List<ItemDtoWithDatesAndComments> getAllUserItems(long userId) {
         findUserOrThrow(userId);
         LocalDateTime now = LocalDateTime.now();
         List<Item> userItems = itemRepository.findAllByOwnerId(userId);
         List<Booking> bookings = bookingRepository.findAllByItemOwnerId(userId);
         Map<Item, List<Booking>> bookingsByItem = bookings.stream()
                 .collect(Collectors.groupingBy(Booking::getItem));
-        List<ItemDtoWithBookingsDates> result = new ArrayList<>();
+        List<ItemDtoWithDatesAndComments> result = new ArrayList<>();
         for (Item item: userItems) {
             List<Booking> itemBookings = bookingsByItem.getOrDefault(item, List.of());
             Optional<Booking> lastBooking = itemBookings
@@ -82,10 +89,14 @@ public class ItemServiceImpl implements ItemService {
                     .stream()
                     .filter(booking -> booking.getStart().isAfter(now))
                     .min(Comparator.comparing(Booking::getStart));
-            result.add(ItemMapper.toItemDtoWithBookingsDates(
+            List<CommentDto> commentDtos = ItemMapper.mapListToCommentDto(
+                    commentRepository.findAllByItemId(item.getId())
+            );
+            result.add(ItemMapper.toItemDtoWithBookingsDatesAndComments(
                     item,
                     lastBooking.orElse(null),
-                    nextBooking.orElse(null)
+                    nextBooking.orElse(null),
+                    commentDtos
             ));
         }
         return result;
@@ -99,6 +110,7 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.mapListToDto(itemRepository.searchAvailableItemsByNameOrDescription(text));
     }
 
+    @Transactional
     @Override
     public CommentDto addCommentToItem(CommentDto commentDto, long itemId, long userId) {
         User user = findUserOrThrow(userId);

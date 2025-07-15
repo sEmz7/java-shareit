@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemDtoWithBookingsDates;
+import ru.practicum.shareit.item.dto.ItemDtoWithDatesAndComments;
 import ru.practicum.shareit.item.dto.CommentDto;
 
 import java.util.List;
@@ -34,14 +34,14 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ResponseEntity<ItemDto> getItemById(@PathVariable long itemId) {
-        ItemDto itemDto = itemService.getById(itemId);
+    public ResponseEntity<ItemDtoWithDatesAndComments> getItemById(@PathVariable long itemId) {
+        ItemDtoWithDatesAndComments itemDto = itemService.getById(itemId);
         return ResponseEntity.ok(itemDto);
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemDtoWithBookingsDates>> getAllUserItems(@RequestHeader(USER_ID_HEADER) Long userId) {
-        List<ItemDtoWithBookingsDates> items = itemService.getAllUserItems(userId);
+    public ResponseEntity<List<ItemDtoWithDatesAndComments>> getAllUserItems(@RequestHeader(USER_ID_HEADER) Long userId) {
+        List<ItemDtoWithDatesAndComments> items = itemService.getAllUserItems(userId);
         return ResponseEntity.ok(items);
     }
 
