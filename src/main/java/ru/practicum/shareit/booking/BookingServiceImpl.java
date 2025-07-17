@@ -27,6 +27,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
+    private static final String SORT_BY_START = "start";
 
     @Transactional
     @Override
@@ -65,28 +66,23 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingDtoResponse> getUserBookings(String stateStr, long userId) {
-        State state;
-        try {
-            state = State.valueOf(stateStr);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidUserInputException("Нет такого статуса брони: " + stateStr);
-        }
+        State state = State.fromString(stateStr);
         return switch (state)  {
             case ALL -> BookingMapper.mapListToDtoResponses(
                     bookingRepository.findAllByBookerIdOrderByStartDesc(userId)
             );
             case CURRENT -> BookingMapper.mapListToDtoResponses(
                         bookingRepository.findAllByBookerIdAndStateCurrent(
-                                userId, state, Sort.by(Sort.Direction.DESC, "start")
+                                userId, state, Sort.by(Sort.Direction.DESC, SORT_BY_START)
                         ));
             case PAST -> BookingMapper.mapListToDtoResponses(
                         bookingRepository.findAllByBookerIdAndStatePast(
-                                userId, state, Sort.by(Sort.Direction.DESC, "start")
+                                userId, state, Sort.by(Sort.Direction.DESC, SORT_BY_START)
                         )
                 );
             case FUTURE -> BookingMapper.mapListToDtoResponses(
                     bookingRepository.findAllByBookerIdAndStateFuture(
-                            userId, state, Sort.by(Sort.Direction.DESC, "start")
+                            userId, state, Sort.by(Sort.Direction.DESC, SORT_BY_START)
                     )
             );
             case WAITING -> BookingMapper.mapListToDtoResponses(
@@ -100,28 +96,23 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingDtoResponse> getOwnerBookings(String stateStr, long ownerId) {
-        State state;
-        try {
-            state = State.valueOf(stateStr);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidUserInputException("Нет такого статуса брони: " + stateStr);
-        }
-        List<BookingDtoResponse> list = switch (state) {
+        State state = State.fromString(stateStr);
+        List<BookingDtoResponse> bookings = switch (state) {
             case ALL -> BookingMapper.mapListToDtoResponses(
                     bookingRepository.findAllByItemOwnerIdOrderByStartDesc(ownerId));
             case CURRENT -> BookingMapper.mapListToDtoResponses(
                     bookingRepository.findAllByItemOwnerIdAndStateCurrent(
-                            ownerId, state, Sort.by(Sort.Direction.DESC, "start")
+                            ownerId, state, Sort.by(Sort.Direction.DESC, SORT_BY_START)
                     )
             );
             case PAST -> BookingMapper.mapListToDtoResponses(
                     bookingRepository.findAllByItemOwnerIdAndStatePast(
-                            ownerId, state, Sort.by(Sort.Direction.DESC, "start")
+                            ownerId, state, Sort.by(Sort.Direction.DESC, SORT_BY_START)
                     )
             );
             case FUTURE -> BookingMapper.mapListToDtoResponses(
                     bookingRepository.findAllByItemOwnerIdAndStateFuture(
-                            ownerId, state, Sort.by(Sort.Direction.DESC, "start")
+                            ownerId, state, Sort.by(Sort.Direction.DESC, SORT_BY_START)
                     )
             );
             case WAITING -> BookingMapper.mapListToDtoResponses(
@@ -129,10 +120,10 @@ public class BookingServiceImpl implements BookingService {
             case REJECTED -> BookingMapper.mapListToDtoResponses(
                     bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(ownerId, BookingStatus.REJECTED));
         };
-        if (list.isEmpty()) {
+        if (bookings.isEmpty()) {
             throw new NotFoundException("Нету ни одной вещи для бронирования.");
         }
-        return list;
+        return bookings;
     }
 
     private User getUserByIdOrThrow(long userId) {

@@ -47,27 +47,23 @@ public final class ItemMapper {
             Booking nextBooking,
             List<CommentDto> commentDtos
     ) {
-        BookingItemDto lastBookingDto = null;
-        if (lastBooking != null) {
-            lastBookingDto = new BookingItemDto(
-                    lastBooking.getId(),
-                    lastBooking.getStart(),
-                    lastBooking.getEnd(),
-                    lastBooking.getStatus(),
-                    lastBooking.getBooker().getId()
-            );
-        }
+        BookingItemDto lastBookingDto = lastBooking != null
+                ? new BookingItemDto(
+                lastBooking.getId(),
+                lastBooking.getStart(),
+                lastBooking.getEnd(),
+                lastBooking.getStatus(),
+                lastBooking.getBooker().getId())
+                : null;
 
-        BookingItemDto nextBookingDto = null;
-        if (nextBooking != null) {
-            nextBookingDto = new BookingItemDto(
-                    nextBooking.getId(),
-                    nextBooking.getStart(),
-                    nextBooking.getEnd(),
-                    nextBooking.getStatus(),
-                    nextBooking.getBooker().getId()
-            );
-        }
+        BookingItemDto nextBookingDto = nextBooking != null
+                ? new BookingItemDto(
+                nextBooking.getId(),
+                nextBooking.getStart(),
+                nextBooking.getEnd(),
+                nextBooking.getStatus(),
+                nextBooking.getBooker().getId())
+                : null;
 
         return new ItemDtoWithDatesAndComments(
                 item.getId(),
