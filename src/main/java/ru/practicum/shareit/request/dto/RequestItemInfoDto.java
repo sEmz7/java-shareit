@@ -7,7 +7,7 @@ import lombok.Data;
 public class RequestItemInfoDto {
     private Long itemId;
 
-    private String itemName;
+    private String name;
 
     private Long ownerId;
 }
