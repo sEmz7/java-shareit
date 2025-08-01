@@ -7,7 +7,6 @@ import ru.practicum.shareit.request.dto.ItemRequestInputDto;
 import ru.practicum.shareit.request.dto.RequestItemInfoDto;
 import ru.practicum.shareit.request.model.ItemRequest;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class ItemRequestMapper {

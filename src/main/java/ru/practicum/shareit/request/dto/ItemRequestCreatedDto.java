@@ -8,7 +8,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Data @EqualsAndHashCode @AllArgsConstructor @NoArgsConstructor
+@Data
+@EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
 public class ItemRequestCreatedDto {
     private Long id;
     @NotBlank
