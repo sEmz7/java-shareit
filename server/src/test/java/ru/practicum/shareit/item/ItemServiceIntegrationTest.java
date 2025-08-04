@@ -8,16 +8,24 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingStatus;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithDatesAndComments;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequestRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Transactional
@@ -38,6 +46,9 @@ public class ItemServiceIntegrationTest {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private ItemRequestRepository requestRepository;
 
     @Test
     void getAllUserItems_shouldReturnItemsWithBookingsAndComments() {
@@ -97,5 +108,66 @@ public class ItemServiceIntegrationTest {
         assertEquals(comment.getText(), dto.getComments().getFirst().getText());
         assertEquals(booker.getName(), dto.getComments().getFirst().getAuthorName());
         assertEquals(comment.getCreated(), dto.getComments().getFirst().getCreated());
+    }
+
+    @Test
+    void createItem_withoutRequest_shouldSucceed() {
+        User user = userRepository.save(new User(null, "Test", "test@mail.com"));
+
+        ItemDto dto = new ItemDto();
+        dto.setName("item name");
+        dto.setDescription("desc");
+        dto.setAvailable(true);
+
+        ItemDto result = itemService.create(dto, user.getId());
+
+        assertNotNull(result.getId());
+        assertEquals(dto.getName(), result.getName());
+        assertEquals(dto.getDescription(), result.getDescription());
+        assertEquals(dto.getAvailable(), result.getAvailable());
+    }
+
+    @Test
+    void createItem_withRequest_shouldSucceed() {
+        User user = userRepository.save(new User(null, "Test", "test@mail.com"));
+        ItemRequest request = new ItemRequest();
+        request.setDescription("need item");
+        request.setRequestor(user);
+        request.setCreated(LocalDateTime.now());
+        request = requestRepository.save(request);
+
+        ItemDto dto = new ItemDto();
+        dto.setName("item with request");
+        dto.setDescription("desc");
+        dto.setAvailable(true);
+        dto.setRequestId(request.getId());
+
+        ItemDto result = itemService.create(dto, user.getId());
+
+        assertEquals(dto.getName(), result.getName());
+        assertEquals(request.getId(), result.getRequestId());
+    }
+
+    @Test
+    void createItem_userNotFound_shouldThrow() {
+        ItemDto dto = new ItemDto();
+        dto.setName("x");
+        dto.setDescription("y");
+        dto.setAvailable(true);
+
+        assertThrows(NotFoundException.class, () -> itemService.create(dto, 999L));
+    }
+
+    @Test
+    void createItem_requestNotFound_shouldThrow() {
+        User user = userRepository.save(new User(null, "User", "user@mail.com"));
+
+        ItemDto dto = new ItemDto();
+        dto.setName("x");
+        dto.setDescription("y");
+        dto.setAvailable(true);
+        dto.setRequestId(999L);
+
+        assertThrows(NotFoundException.class, () -> itemService.create(dto, user.getId()));
     }
 }
